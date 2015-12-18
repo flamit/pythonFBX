@@ -1,0 +1,49 @@
+import FbxCommon
+import fbx
+import math
+import sys
+import webbrowser
+import glob, os
+from xml.etree import ElementTree as et
+
+# global variables
+filenames = []
+filenum = 0
+polygoncount = 0
+vertexcount = 0
+normalscount = 0
+normalscount=[]
+
+sdk_manager, scene = FbxCommon.InitializeSdkObjects()
+converter = fbx.FbxGeometryConverter(sdk_manager)
+
+path = os.getcwd()
+newpath=path+"\Fbx Files"
+print(newpath)
+
+os.chdir(newpath)
+for file in glob.glob("*.fbx"):
+    filenames.append(file)
+
+filenum = len(filenames)
+doc = et.Element('svg', width='4800', height='4800', version='1.1', xmlns='http://www.w3.org/2000/svg')
+for file in range(filenum):
+    if not FbxCommon.LoadScene(sdk_manager, scene, filenames[file]):
+        print("Not found")
+
+    node = scene.GetRootNode()
+    for i in range(node.GetChildCount()):
+        child = node.GetChild(i)
+        attr_type = child.GetNodeAttribute().GetAttributeType()
+
+        if attr_type==FbxCommon.FbxNodeAttribute.eMesh:
+            
+            mesh = child.GetNodeAttribute()
+            if not mesh.GetNode().GetMesh().IsTriangleMesh():
+                triangulateMesh=converter.Triangulate(mesh,False)
+                print("Triangulated")
+            """textfilex = open('pointsx.txt', 'w')
+            textfiley = open('pointsy.txt', 'w')"""
+            polygoncount = triangulateMesh.GetNode().GetMesh().GetPolygonCount()
+            for i in range(polygoncount):
+                vertexcount = triangulateMesh.GetNode().GetMesh().GetPolygonSize(i)
